@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zepeto Accounts - Zepeto Automation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        dark: '#0B0E14',
+                        card: '#151A23',
+                        accent: '#a855f7',
+                        accentHover: '#9333ea'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #0B0E14; color: #e2e8f0; font-family: 'Inter', sans-serif; }
+        .sidebar-link { transition: all 0.3s; border-radius: 8px; margin-bottom: 4px; cursor: pointer; }
+        .sidebar-link:hover, .active-nav { background: rgba(168, 85, 247, 0.15); color: #d8b4fe; }
+        .active-nav { border-left: 3px solid #a855f7; }
+        .glass-card {
+            background: #151A23;
+            border: 1px solid #2d3748;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+        .glass-card:hover { transform: translateY(-3px); border-color: #a855f7; }
+        
+        .status-dot {
+            height: 10px; width: 10px;
+            background-color: #22c55e;
+            border-radius: 50%;
+            display: inline-block;
+            box-shadow: 0 0 10px #22c55e;
+            animation: pulse 2s infinite;
+        }
+        .status-dot.offline { background-color: #ef4444; box-shadow: none; animation: none; }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+            70% { box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+        }
+
+        /* Mobile Sidebar Overlay */
+        #sidebarOverlay { display: none; }
+        @media (max-width: 768px) {
+            #sidebar { position: fixed; left: -100%; z-index: 50; height: 100%; transition: 0.3s; }
+            #sidebar.open { left: 0; }
+            #sidebarOverlay.open { display: block; }
+        }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden">
+
+    <div id="sidebarOverlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/60 z-40"></div>
+
+    <aside id="sidebar" class="w-64 bg-[#0B0E14] border-r border-gray-800 flex-shrink-0 flex flex-col justify-between p-5">
+        <div>
+            <div class="flex items-center justify-between mb-10 px-2">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-robot text-white"></i>
+                    </div>
+                    <h1 class="font-bold text-xl tracking-wide">Zepeto<span class="text-purple-500">Auto</span></h1>
+                </div>
+                <button onclick="toggleSidebar()" class="md:hidden text-gray-400"><i class="fas fa-times"></i></button>
+            </div>
+
+            <nav>
+                <a href="/member/dashboard" class="sidebar-link flex items-center p-3 text-sm font-medium text-gray-400">
+                    <i class="fas fa-th-large w-6"></i> Dashboard
+                </a>
+                <a href="/member/accounts" class="sidebar-link active-nav flex items-center p-3 text-sm font-medium">
+                    <i class="fas fa-users w-6"></i> Zepeto Accounts
+                </a>
+                <a href="/member/upload" class="sidebar-link flex items-center p-3 text-sm font-medium text-gray-400">
+                    <i class="fas fa-cloud-upload-alt w-6"></i> Upload Assets
+                </a>
+                <a href="/member/history" class="sidebar-link flex items-center p-3 text-sm font-medium text-gray-400">
+                    <i class="fas fa-history w-6"></i> History Log
+                </a>
+                <a href="/member/settings" class="sidebar-link flex items-center p-3 text-sm font-medium text-gray-400">
+                    <i class="fas fa-cog w-6"></i> API Settings
+                </a>
+            </nav>
+        </div>
+
+        <div class="p-4 glass-card">
+            <div class="flex items-center gap-3">
+                <div id="userAvatar" class="w-8 h-8 rounded-full bg-gradient-to-tr from-purple-500 to-blue-500 flex items-center justify-center text-[10px] font-bold text-white">U</div>
+                <div>
+                    <p id="profileName" class="text-sm font-bold text-white">Member</p>
+                    <p class="text-xs text-green-400">● Online</p>
+                </div>
+            </div>
+            <button onclick="logout()" class="mt-4 w-full text-xs text-red-400 hover:text-red-300 transition flex items-center justify-center gap-2">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </button>
+        </div>
+    </aside>
+
+    <main class="flex-1 overflow-y-auto p-4 md:p-8">
+        <header class="flex justify-between items-center mb-8">
+            <div class="flex items-center gap-4">
+                <button onclick="toggleSidebar()" class="md:hidden text-gray-400 text-xl"><i class="fas fa-bars"></i></button>
+                <div>
+                    <h2 class="text-2xl md:text-3xl font-bold text-white">Zepeto <span class="text-purple-500">Accounts</span></h2>
+                    <p class="text-gray-400 text-xs md:text-sm mt-1">Manage connected accounts for automation.</p>
+                </div>
+            </div>
+            <button onclick="toggleModal(true)" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 shadow-lg shadow-purple-900/50 transition text-sm">
+                <i class="fas fa-plus"></i> <span class="hidden sm:inline">Connect Account</span>
+            </button>
+        </header>
+
+        <div id="account-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div class="col-span-full py-20 text-center text-gray-500">
+                <i class="fas fa-circle-notch fa-spin text-3xl mb-4"></i>
+                <p>Fetching accounts...</p>
+            </div>
+        </div>
+    </main>
+
+    <div id="addModal" class="hidden fixed inset-0 bg-black/80 z-[60] flex items-center justify-center p-4">
+        <div class="glass-card w-full max-w-md p-6 bg-[#151A23]">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold text-white">Connect Zepeto Account</h3>
+                <button onclick="toggleModal(false)" class="text-gray-500 hover:text-white"><i class="fas fa-times"></i></button>
+            </div>
+            
+            <div class="bg-blue-900/20 border border-blue-800 p-3 rounded-lg mb-4 text-xs text-blue-200">
+                <i class="fas fa-info-circle mr-1"></i> Sistem akan melakukan login otomatis untuk mengambil token akses. Pastikan data benar.
+            </div>
+
+            <form id="addAccountForm" class="space-y-4">
+                <div>
+                    <label class="text-xs text-gray-500 uppercase font-bold">Email / Phone / Username</label>
+                    <input type="text" id="zepetoId" class="w-full bg-dark border border-gray-700 p-3 rounded-lg text-white mt-1" placeholder="Ex: myzepeto@gmail.com" required>
+                </div>
+                <div>
+                    <label class="text-xs text-gray-500 uppercase font-bold">Password</label>
+                    <input type="password" id="zepetoPassword" class="w-full bg-dark border border-gray-700 p-3 rounded-lg text-white mt-1" placeholder="Enter Zepeto Password" required>
+                </div>
+                
+                <button type="submit" id="btnConnect" class="w-full bg-purple-600 hover:bg-purple-700 py-3 rounded-lg font-bold transition mt-4 flex items-center justify-center gap-2">
+                    <span>Connect Account</span>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('zepeto_token');
+        const userId = localStorage.getItem('user_id');
+        const username = localStorage.getItem('username');
+
+        // Proteksi Halaman
+        if (!token) window.location.href = '/';
+
+        // Set Profil UI
+        document.getElementById('profileName').innerText = username || 'Member';
+        document.getElementById('userAvatar').innerText = (username || 'U').charAt(0).toUpperCase();
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('open');
+            document.getElementById('sidebarOverlay').classList.toggle('open');
+        }
+
+        function toggleModal(show) {
+            document.getElementById('addModal').classList.toggle('hidden', !show);
+            if(show) document.getElementById('addAccountForm').reset();
+        }
+
+        // --- LOAD ACCOUNTS ---
+        async function loadAccounts() {
+            const grid = document.getElementById('account-grid');
+            try {
+                // Memanggil API Functions: functions/api/user/zepeto-accounts.js
+                const res = await fetch(`/api/user/zepeto-accounts?member_id=${userId}`, {
+                    headers: { 'Authorization': token }
+                });
+
+                if (res.status === 401) { logout(); return; }
+
+                const accounts = await res.json();
+                
+                grid.innerHTML = '';
+                if (accounts.length === 0) {
+                    grid.innerHTML = `
+                        <div class="col-span-full py-10 flex flex-col items-center justify-center text-gray-600 border-2 border-dashed border-gray-800 rounded-xl">
+                            <i class="fas fa-ghost text-4xl mb-3 opacity-50"></i>
+                            <p class="text-sm">No accounts linked yet.</p>
+                            <button onclick="toggleModal(true)" class="mt-4 text-purple-500 hover:text-purple-400 text-sm font-bold">Connect Now</button>
+                        </div>`;
+                    return;
+                }
+
+                accounts.forEach(acc => {
+                    // Cek status dari database (connected / active / expired)
+                    const isActive = acc.status === 'connected' || acc.status === 'active';
+                    const card = `
+                    <div class="glass-card p-5 relative ${!isActive ? 'opacity-70 border-red-900/30' : ''}">
+                        <div class="absolute top-4 right-4 flex items-center gap-2 bg-black/40 px-3 py-1 rounded-full border border-gray-700">
+                            <span class="status-dot ${!isActive ? 'offline' : ''}"></span>
+                            <span class="text-[10px] font-bold ${isActive ? 'text-green-400' : 'text-red-400'} tracking-wider">${acc.status ? acc.status.toUpperCase() : 'UNKNOWN'}</span>
+                        </div>
+                        <div class="flex items-center gap-4 mb-5 pt-4">
+                            <div class="w-14 h-14 rounded-xl border-2 border-gray-700 bg-purple-900/20 flex items-center justify-center text-xl font-bold text-purple-400">
+                                ${acc.zepeto_id.charAt(0).toUpperCase()}
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-white text-lg truncate w-32" title="${acc.zepeto_id}">${acc.zepeto_id}</h3>
+                                <p class="text-gray-500 text-xs font-mono">ID: #${acc.id}</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button class="flex-1 bg-gray-800 hover:bg-gray-700 text-white text-xs py-2 rounded-lg border border-gray-700 transition">
+                                <i class="fas fa-sync-alt mr-1"></i> Sync
+                            </button>
+                            <button onclick="deleteAccount(${acc.id})" class="w-10 bg-red-900/20 hover:bg-red-900/40 text-red-500 border border-red-900/30 rounded-lg transition flex justify-center items-center">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    `;
+                    grid.innerHTML += card;
+                });
+            } catch (err) {
+                grid.innerHTML = '<div class="col-span-full text-center text-red-500">Failed to load accounts. Server Error.</div>';
+            }
+        }
+
+        // --- SUBMIT AUTO LOGIN ---
+        document.getElementById('addAccountForm').onsubmit = async (e) => {
+            e.preventDefault();
+            
+            const btn = document.getElementById('btnConnect');
+            const originalText = btn.innerHTML;
+            
+            // Set Loading State
+            btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Connecting...';
+            btn.disabled = true;
+            btn.classList.add('opacity-75', 'cursor-not-allowed');
+
+            const payload = {
+                member_id: userId,
+                zepeto_username: document.getElementById('zepetoId').value, // Sesuai backend
+                zepeto_password: document.getElementById('zepetoPassword').value // Sesuai backend
+            };
+
+            try {
+                // Tembak ke API Auto-Login: functions/api/user/zepeto/add.js
+                const res = await fetch('/api/user/zepeto/add', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': token },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await res.json();
+
+                if (res.ok && data.status === 'success') {
+                    toggleModal(false);
+                    loadAccounts(); // Refresh grid
+                    alert(`Berhasil terhubung sebagai: ${data.zepeto_id}`);
+                } else {
+                    alert(data.error || 'Gagal menghubungkan akun. Cek username/password.');
+                }
+            } catch (err) {
+                alert('Terjadi kesalahan koneksi.');
+            } finally {
+                // Reset Button
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                btn.classList.remove('opacity-75', 'cursor-not-allowed');
+            }
+        };
+
+        // --- DELETE ACCOUNT ---
+        async function deleteAccount(id) {
+            if (!confirm('Hapus akun ini dari database? Token akan hilang.')) return;
+            
+            try {
+                const res = await fetch('/api/user/zepeto/delete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': token },
+                    body: JSON.stringify({ account_id: id })
+                });
+                
+                if (res.ok) {
+                    loadAccounts();
+                } else {
+                    alert('Gagal menghapus akun.');
+                }
+            } catch (err) {
+                alert('Server error saat menghapus.');
+            }
+        }
+
+        function logout() { 
+            localStorage.clear(); 
+            window.location.href = '/'; 
+        }
+
+        // Init
+        document.addEventListener('DOMContentLoaded', loadAccounts);
+    </script>
+</body>
+</html>

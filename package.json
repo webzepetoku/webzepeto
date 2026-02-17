@@ -1,0 +1,12 @@
+{
+  "name": "webzepetoku",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "wrangler pages dev public --d1 DB",
+    "deploy": "wrangler pages deploy public"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "wrangler": "^4.65.0"
+  }
+}

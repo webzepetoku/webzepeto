@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Member Dashboard - Auto Uploader</title>
+    <style>
+        .card { border: 1px solid #ccc; padding: 20px; border-radius: 8px; max-width: 500px; margin: 20px auto; }
+        .form-group { margin-bottom: 15px; }
+        .form-input { width: 100%; padding: 8px; margin-top: 5px; box-sizing: border-box; }
+        .btn { background: #007bff; color: white; border: none; padding: 10px 15px; cursor: pointer; width: 100%; }
+        .btn:disabled { background: #ccc; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h3>Zepeto Open API Uploader</h3>
+    
+    <div class="form-group">
+        <label>Pilih Akun Zepeto (Open API):</label>
+        <select id="zepeto_account_id" class="form-input">
+            <option value="">-- Memuat Akun --</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label>Google Drive FBX File ID:</label>
+        <input type="text" id="fbx_drive_id" placeholder="Masukkan ID File Drive" class="form-input">
+    </div>
+
+    <div class="form-group">
+        <label>Nama File Output (.zepeto):</label>
+        <input type="text" id="filename" placeholder="nama_item_anda.fbx" class="form-input">
+    </div>
+
+    <button onclick="startUploadProcess()" id="btn-submit" class="btn">Mulai Konversi & Upload</button>
+    <p id="status-text" style="text-align: center;"></p>
+</div>
+
+<script>
+// Contoh member_id 2 sesuai data di SQL
+const MEMBER_ID = 2; 
+
+// 1. Ambil list akun Zepeto milik member
+async function fetchAccounts() {
+    const select = document.getElementById('zepeto_account_id');
+    try {
+        const res = await fetch(`/api/user/zepeto/list?member_id=${MEMBER_ID}`);
+        const data = await res.json();
+        
+        select.innerHTML = data.map(acc => 
+            `<option value="${acc.id}">${acc.zepeto_id} [ID:${acc.id}]</option>`
+        ).join('');
+    } catch (e) {
+        select.innerHTML = '<option value="">Gagal memuat akun</option>';
+    }
+}
+
+// 2. Kirim data ke Bridge (functions/api/convert.js)
+async function startUploadProcess() {
+    const btn = document.getElementById('btn-submit');
+    const status = document.getElementById('status-text');
+    
+    const payload = {
+        member_id: MEMBER_ID,
+        zepeto_account_id: document.getElementById('zepeto_account_id').value,
+        file_id: document.getElementById('fbx_drive_id').value,
+        filename: document.getElementById('filename').value
+    };
+
+    if(!payload.zepeto_account_id || !payload.file_id || !payload.filename) {
+        alert("Semua field wajib diisi!");
+        return;
+    }
+
+    btn.disabled = true;
+    status.innerText = "Mengirim tugas ke Hugging Face...";
+
+    try {
+        const res = await fetch('/api/convert', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const result = await res.json();
+
+        if (res.ok) {
+            status.style.color = "green";
+            status.innerText = "Berhasil! Cek antrean di History.";
+        } else {
+            status.style.color = "red";
+            status.innerText = "Gagal: " + result.error;
+        }
+    } catch (e) {
+        status.innerText = "Koneksi Error.";
+    } finally {
+        btn.disabled = false;
+    }
+}
+
+fetchAccounts();
+</script>
+</body>
+</html>
