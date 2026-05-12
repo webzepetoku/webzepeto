@@ -1,13 +1,21 @@
 name = "webzepetoku"
-compatibility_date = "2025-02-01" # Update ke tanggal terbaru
-pages_build_output_dir = "public"
+compatibility_date = "2024-03-20"
+pages_build_output_dir = "dist"
 
+# Konfigurasi HonoX & Node.js
 compatibility_flags = ["nodejs_compat"]
 
-[vars]
-HF_API_URL = "https://webzepetoku-convert.hf.space/convert"
-
+# 1. BINDING DATABASE (D1)
 [[d1_databases]]
 binding = "DB"
 database_name = "webzepetoku"
 database_id = "918a66da-6ebc-4de1-914d-c5c380291e05"
+
+# 2. BINDING STORAGE (R2)
+[[r2_buckets]]
+binding = "MY_BUCKET"
+bucket_name = "zepeto-assets-bucket"
+
+# 3. CRON TRIGGERS (Penjadwal Bot Background)
+[triggers]
+crons = ["* * * * *"] # Berjalan setiap 1 menit
