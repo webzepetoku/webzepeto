@@ -1,12 +1,21 @@
 {
   "name": "webzepetoku",
-  "version": "1.0.0",
+  "version": "2.0.0",
+  "type": "module",
   "scripts": {
-    "dev": "wrangler pages dev public --d1 DB",
-    "deploy": "wrangler pages deploy public"
+    "dev": "vite",
+    "build": "vite build --mode client && vite build",
+    "preview": "wrangler pages dev dist --d1 DB",
+    "deploy": "npm run build && wrangler pages deploy dist"
   },
-  "dependencies": {},
+  "dependencies": {
+    "hono": "^4.1.1",
+    "honox": "^0.1.10",
+    "preact": "^10.20.1"
+  },
   "devDependencies": {
-    "wrangler": "^4.65.0"
+    "@cloudflare/workers-types": "^4.20240320.1",
+    "vite": "^5.1.6",
+    "wrangler": "^3.36.0"
   }
 }
